@@ -1,0 +1,23 @@
+@SkillSnap.Api_HostAddress = http://localhost:5299
+
+GET {{SkillSnap.Api_HostAddress}}/health
+Accept: application/json
+
+###
+
+POST {{SkillSnap.Api_HostAddress}}/api/seed
+
+###
+
+POST {{SkillSnap.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "jordan@skillsnap.local",
+  "password": "DemoPass1!"
+}
+
+###
+
+GET {{SkillSnap.Api_HostAddress}}/api/projects
+Accept: application/json

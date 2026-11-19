@@ -1,0 +1,34 @@
+@page "/login"
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Sign in · SkillSnap</PageTitle>
+
+<section class="auth-layout">
+    <div class="auth-intro"><p class="eyebrow">Welcome back</p><h1>Pick up where<br />you left off.</h1><p>Your work deserves a place that feels like yours.</p></div>
+    <div class="form-card">
+        <h2>Sign in</h2>
+        <p>New here? <a href="register">Create a free account.</a></p>
+        @if (error is not null) { <div class="notice notice-error" role="alert">@error</div> }
+        <EditForm Model="model" OnValidSubmit="SubmitAsync">
+            <DataAnnotationsValidator />
+            <label>Email <InputText @bind-Value="model.Email" type="email" autocomplete="email" /><ValidationMessage For="@(() => model.Email)" /></label>
+            <label>Password <InputText @bind-Value="model.Password" type="password" autocomplete="current-password" /><ValidationMessage For="@(() => model.Password)" /></label>
+            <button class="button button-primary button-wide" disabled="@busy">@(busy ? "Signing in…" : "Sign in")</button>
+        </EditForm>
+        <p class="form-hint">Demo after seeding: jordan@skillsnap.local / DemoPass1!</p>
+    </div>
+</section>
+
+@code {
+    private readonly LoginModel model = new();
+    private bool busy;
+    private string? error;
+    private async Task SubmitAsync()
+    {
+        busy = true; error = null;
+        try { await AuthService.LoginAsync(model); Navigation.NavigateTo("dashboard"); }
+        catch (HttpRequestException) { error = "We couldn't sign you in. Check your email and password."; }
+        finally { busy = false; }
+    }
+}

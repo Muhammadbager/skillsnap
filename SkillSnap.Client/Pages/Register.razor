@@ -1,0 +1,35 @@
+@page "/register"
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Join · SkillSnap</PageTitle>
+
+<section class="auth-layout register-layout">
+    <div class="auth-intro"><p class="eyebrow">Start with one project</p><h1>Your next chapter<br /><em>starts here.</em></h1><p>Collect the work you are proud of and keep your growth visible.</p></div>
+    <div class="form-card">
+        <h2>Create your account</h2>
+        <p>Already a member? <a href="login">Sign in.</a></p>
+        @if (error is not null) { <div class="notice notice-error" role="alert">@error</div> }
+        <EditForm Model="model" OnValidSubmit="SubmitAsync">
+            <DataAnnotationsValidator />
+            <label>Display name <InputText @bind-Value="model.Name" autocomplete="name" /><ValidationMessage For="@(() => model.Name)" /></label>
+            <label>Email <InputText @bind-Value="model.Email" type="email" autocomplete="email" /><ValidationMessage For="@(() => model.Email)" /></label>
+            <label>Password <InputText @bind-Value="model.Password" type="password" autocomplete="new-password" /><ValidationMessage For="@(() => model.Password)" /></label>
+            <p class="form-hint">Use 8+ characters with an uppercase letter and number.</p>
+            <button class="button button-primary button-wide" disabled="@busy">@(busy ? "Creating…" : "Create account")</button>
+        </EditForm>
+    </div>
+</section>
+
+@code {
+    private readonly RegisterModel model = new();
+    private bool busy;
+    private string? error;
+    private async Task SubmitAsync()
+    {
+        busy = true; error = null;
+        try { await AuthService.RegisterAsync(model); Navigation.NavigateTo("dashboard"); }
+        catch (HttpRequestException) { error = "We couldn't create that account. The email may already be registered or the password needs to be stronger."; }
+        finally { busy = false; }
+    }
+}

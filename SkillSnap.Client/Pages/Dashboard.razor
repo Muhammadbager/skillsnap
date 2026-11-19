@@ -1,0 +1,84 @@
+@page "/dashboard"
+@attribute [Authorize]
+@inject ProfileService ProfileService
+@inject ProjectService ProjectService
+@inject SkillService SkillService
+@inject UserSessionService Session
+
+<PageTitle>My studio · SkillSnap</PageTitle>
+
+<section class="studio-header">
+    <div><p class="eyebrow">Your studio</p><h1>Shape the story<br />behind the work.</h1></div>
+    <p>Edit your profile, add projects, and keep your skill set honest. Changes are saved through the protected API.</p>
+</section>
+
+@if (loading)
+{
+    <div class="loading-grid"><div></div><div></div></div>
+}
+else if (profile is null)
+{
+    <div class="notice notice-error">We couldn't load your portfolio. Please sign out and try again.</div>
+}
+else
+{
+    <section class="studio-grid">
+        <div class="studio-sidebar">
+            <ProfileCard Profile="profile" />
+            <details class="editor-panel">
+                <summary>Edit profile</summary>
+                <EditForm Model="profileForm" OnValidSubmit="SaveProfileAsync">
+                    <DataAnnotationsValidator />
+                    <label>Name <InputText @bind-Value="profileForm.Name" /><ValidationMessage For="@(() => profileForm.Name)" /></label>
+                    <label>Bio <InputTextArea @bind-Value="profileForm.Bio" /><ValidationMessage For="@(() => profileForm.Bio)" /></label>
+                    <label>Image URL <InputText @bind-Value="profileForm.ProfileImageUrl" /><ValidationMessage For="@(() => profileForm.ProfileImageUrl)" /></label>
+                    <button class="button button-dark button-wide">Save profile</button>
+                </EditForm>
+            </details>
+        </div>
+        <div class="studio-content">
+            @if (message is not null) { <div class="notice notice-success">@message</div> }
+            <div class="studio-section-heading"><div><p class="eyebrow">Your work</p><h2>Projects</h2></div></div>
+            <ProjectList Projects="projects" AllowEditing="true" PortfolioId="profile.Id" OnChanged="ReloadProjectsAsync" />
+            <div class="studio-section-heading skill-heading"><div><p class="eyebrow">Your toolkit</p><h2>Skills</h2></div></div>
+            <SkillTags Skills="skills" AllowEditing="true" PortfolioId="profile.Id" OnChanged="ReloadSkillsAsync" />
+        </div>
+    </section>
+}
+
+@code {
+    private PortfolioDto? profile;
+    private List<ProjectDto> projects = [];
+    private List<SkillDto> skills = [];
+    private readonly ProfileFormModel profileForm = new();
+    private bool loading = true;
+    private string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        profile = await ProfileService.GetMineAsync();
+        if (profile is not null)
+        {
+            profileForm.Name = profile.Name; profileForm.Bio = profile.Bio; profileForm.ProfileImageUrl = profile.ProfileImageUrl;
+            await Task.WhenAll(ReloadProjectsAsync(), ReloadSkillsAsync());
+        }
+        loading = false;
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        await ProfileService.UpdateMineAsync(profileForm);
+        profile = await ProfileService.GetMineAsync();
+        message = "Profile updated.";
+    }
+    private async Task ReloadProjectsAsync()
+    {
+        var allProjects = await ProjectService.GetProjectsAsync();
+        projects = allProjects.Where(item => item.PortfolioUserId == profile?.Id).ToList();
+    }
+    private async Task ReloadSkillsAsync()
+    {
+        var allSkills = await SkillService.GetSkillsAsync();
+        skills = allSkills.Where(item => item.PortfolioUserId == profile?.Id).ToList();
+    }
+}

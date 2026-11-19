@@ -1,0 +1,25 @@
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    <LayoutView Layout="@typeof(MainLayout)">
+                        <section class="empty-state">
+                            <p class="eyebrow">Members only</p>
+                            <h1>Sign in to continue</h1>
+                            <p>This page is reserved for SkillSnap members.</p>
+                            <a class="button button-primary" href="login">Sign in</a>
+                        </section>
+                    </LayoutView>
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>Not found · SkillSnap</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <section class="empty-state"><h1>That page went off-grid.</h1><a href="/">Return home</a></section>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

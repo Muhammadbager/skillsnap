@@ -1,0 +1,40 @@
+@inherits LayoutComponentBase
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<div class="site-shell">
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="SkillSnap home">
+            <span class="brand-mark">S</span>
+            <span>SkillSnap</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+            <NavLink href="/" Match="NavLinkMatch.All">Discover</NavLink>
+            <AuthorizeView>
+                <Authorized>
+                    <NavLink href="dashboard">My studio</NavLink>
+                    <button class="nav-button" @onclick="LogOutAsync">Log out</button>
+                </Authorized>
+                <NotAuthorized>
+                    <NavLink href="login">Sign in</NavLink>
+                    <a class="button button-small button-dark" href="register">Join SkillSnap</a>
+                </NotAuthorized>
+            </AuthorizeView>
+        </nav>
+    </header>
+    <main>
+        @Body
+    </main>
+    <footer class="site-footer">
+        <span>SkillSnap · Built with Blazor and ASP.NET Core</span>
+        <a href="https://github.com/" target="_blank" rel="noreferrer">Open source</a>
+    </footer>
+</div>
+
+@code {
+    private async Task LogOutAsync()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/");
+    }
+}

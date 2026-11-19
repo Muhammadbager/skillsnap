@@ -1,0 +1,11 @@
+<article class="profile-card">
+    <img src="@AvatarUrl" alt="Portrait of @Profile.Name" />
+    <div><p class="eyebrow">Portfolio owner</p><h2>@Profile.Name</h2><p>@Profile.Bio</p></div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public PortfolioDto Profile { get; set; } = default!;
+    private string AvatarUrl => string.IsNullOrWhiteSpace(Profile.ProfileImageUrl)
+        ? $"https://api.dicebear.com/9.x/initials/svg?seed={Uri.EscapeDataString(Profile.Name)}"
+        : Profile.ProfileImageUrl;
+}

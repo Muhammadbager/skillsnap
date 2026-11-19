@@ -1,0 +1,69 @@
+@inject ProjectService ProjectService
+
+@if (AllowEditing)
+{
+    <details class="editor-panel add-panel" open="@(Projects.Count == 0)">
+        <summary>+ Add a project</summary>
+        <EditForm Model="form" OnValidSubmit="SaveAsync">
+            <DataAnnotationsValidator />
+            <div class="form-row"><label>Title <InputText @bind-Value="form.Title" /><ValidationMessage For="@(() => form.Title)" /></label><label>Repository URL <InputText @bind-Value="form.RepositoryUrl" /><ValidationMessage For="@(() => form.RepositoryUrl)" /></label></div>
+            <label>Description <InputTextArea @bind-Value="form.Description" /><ValidationMessage For="@(() => form.Description)" /></label>
+            <label>Image URL <InputText @bind-Value="form.ImageUrl" /><ValidationMessage For="@(() => form.ImageUrl)" /></label>
+            <div class="button-row"><button class="button button-dark">@(editingId is null ? "Publish project" : "Save changes")</button>@if (editingId is not null) { <button type="button" class="button button-ghost" @onclick="CancelEdit">Cancel</button> }</div>
+        </EditForm>
+    </details>
+}
+
+@if (Projects.Count == 0)
+{
+    <div class="empty-state compact-empty"><h3>No projects yet.</h3><p>The first one is always the hardest—and the most satisfying.</p></div>
+}
+else
+{
+    <div class="project-grid">
+        @foreach (var project in Projects)
+        {
+            <article class="project-card">
+                <div class="project-visual @($"visual-{project.Id % 4}")">
+                    @if (!string.IsNullOrWhiteSpace(project.ImageUrl)) { <img src="@project.ImageUrl" alt="" /> }
+                    else { <span>@project.Title[..1].ToUpperInvariant()</span> }
+                    <small>@project.Id.ToString("00")</small>
+                </div>
+                <div class="project-copy">
+                    <h3>@project.Title</h3><p>@project.Description</p>
+                    <div class="project-actions">
+                        @if (!string.IsNullOrWhiteSpace(project.RepositoryUrl)) { <a href="@project.RepositoryUrl" target="_blank" rel="noreferrer">View source ↗</a> }
+                        @if (AllowEditing && project.PortfolioUserId == PortfolioId)
+                        {
+                            <button @onclick="() => BeginEdit(project)">Edit</button><button class="danger-link" @onclick="() => DeleteAsync(project.Id)">Delete</button>
+                        }
+                    </div>
+                </div>
+            </article>
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public List<ProjectDto> Projects { get; set; } = [];
+    [Parameter] public bool AllowEditing { get; set; }
+    [Parameter] public int? PortfolioId { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+    private ProjectFormModel form = new();
+    private int? editingId;
+
+    private async Task SaveAsync()
+    {
+        if (editingId is int id) await ProjectService.UpdateProjectAsync(id, form);
+        else await ProjectService.AddProjectAsync(form);
+        CancelEdit();
+        await OnChanged.InvokeAsync();
+    }
+    private void BeginEdit(ProjectDto project)
+    {
+        editingId = project.Id;
+        form = new ProjectFormModel { Title = project.Title, Description = project.Description, ImageUrl = project.ImageUrl, RepositoryUrl = project.RepositoryUrl };
+    }
+    private void CancelEdit() { editingId = null; form = new ProjectFormModel(); }
+    private async Task DeleteAsync(int id) { await ProjectService.DeleteProjectAsync(id); await OnChanged.InvokeAsync(); }
+}

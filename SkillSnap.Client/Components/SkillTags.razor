@@ -1,0 +1,31 @@
+@inject SkillService SkillService
+
+@if (AllowEditing)
+{
+    <EditForm Model="form" OnValidSubmit="AddAsync" class="inline-form">
+        <DataAnnotationsValidator />
+        <InputText @bind-Value="form.Name" placeholder="Add a skill" aria-label="Skill name" />
+        <InputSelect @bind-Value="form.Level" aria-label="Skill level"><option>Beginner</option><option>Intermediate</option><option>Advanced</option><option>Expert</option></InputSelect>
+        <button class="button button-dark">Add</button>
+    </EditForm>
+}
+<div class="skill-cloud">
+    @foreach (var skill in Skills)
+    {
+        <span class="skill-tag level-@skill.Level.ToLowerInvariant()">
+            <strong>@skill.Name</strong><small>@skill.Level</small>
+            @if (AllowEditing && skill.PortfolioUserId == PortfolioId) { <button title="Remove @skill.Name" @onclick="() => DeleteAsync(skill.Id)">×</button> }
+        </span>
+    }
+    @if (Skills.Count == 0) { <p class="muted">No skills have been added yet.</p> }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public List<SkillDto> Skills { get; set; } = [];
+    [Parameter] public bool AllowEditing { get; set; }
+    [Parameter] public int? PortfolioId { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+    private SkillFormModel form = new();
+    private async Task AddAsync() { await SkillService.AddSkillAsync(form); form = new SkillFormModel(); await OnChanged.InvokeAsync(); }
+    private async Task DeleteAsync(int id) { await SkillService.DeleteSkillAsync(id); await OnChanged.InvokeAsync(); }
+}
